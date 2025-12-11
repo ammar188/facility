@@ -1,5 +1,5 @@
-import 'package:facility/counter/counter.dart';
 import 'package:facility/l10n/l10n.dart';
+import 'package:facility/screens/loginScreen.dart';
 import 'package:flutter/material.dart';
 
 class App extends StatelessWidget {
@@ -16,7 +16,7 @@ class App extends StatelessWidget {
       ),
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
-      home: const CounterPage(),
+      home: const LoginScreen(),
     );
   }
 }

@@ -19,6 +19,15 @@ class ApiClient {
   Dio get client => _dio;
 
   void _addInterceptors() {
+    _dio.interceptors.add(
+      LogInterceptor(
+        request: true,
+        requestBody: true,
+        responseBody: true,
+        responseHeader: false,
+      ),
+    );
+
     // REQUEST INTERCEPTOR
     _dio.interceptors.add(
       InterceptorsWrapper(
@@ -27,11 +36,14 @@ class ApiClient {
 
           if (!skipAuth) {
             try {
-              final session = Supabase.instance.client.auth.currentSession;
-              final token = session?.accessToken;
+              // Check if Supabase is initialized before accessing
+              if (Supabase.instance.client.auth.currentSession != null) {
+                final session = Supabase.instance.client.auth.currentSession;
+                final token = session?.accessToken;
 
-              if (token != null) {
-                options.headers['Authorization'] = 'Bearer $token';
+                if (token != null) {
+                  options.headers['Authorization'] = 'Bearer $token';
+                }
               }
             } catch (_) {
               // Not crying over session errors
@@ -79,7 +91,7 @@ class ApiClient {
               request.headers['Authorization'] = 'Bearer $newToken';
 
               // Retry original request
-              final result = await _dio.fetch(request);
+              final result = await _dio.fetch<dynamic>(request);
               return handler.resolve(result);
             } catch (_) {
               return handler.next(error);

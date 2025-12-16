@@ -40,7 +40,7 @@ class PhoneInputField extends StatelessWidget {
                 filterQuality: FilterQuality.high,
               ),
               const SizedBox(width: 8),
-              const Text('+91', style: TextStyle(fontSize: 13)),
+              const Text('+92', style: TextStyle(fontSize: 13)),
               const SizedBox(width: 8),
               Expanded(
                 child: TextField(

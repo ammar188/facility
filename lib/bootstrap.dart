@@ -2,7 +2,9 @@ import 'dart:async';
 import 'dart:developer';
 
 import 'package:bloc/bloc.dart';
+import 'package:facility/api.dart';
 import 'package:flutter/widgets.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class AppBlocObserver extends BlocObserver {
   const AppBlocObserver();
@@ -27,7 +29,16 @@ Future<void> bootstrap(FutureOr<Widget> Function() builder) async {
 
   Bloc.observer = const AppBlocObserver();
 
-  // Add cross-flavor configuration here
+  // Initialize Supabase
+  try {
+    await Supabase.initialize(
+      url: ApiConfig.supabaseUrl,
+      anonKey: ApiConfig.supabaseAnonKey,
+    );
+    log('Supabase initialized successfully', name: 'Bootstrap');
+  } catch (e) {
+    log('Failed to initialize Supabase: $e', name: 'Bootstrap');
+  }
 
   runApp(await builder());
 }

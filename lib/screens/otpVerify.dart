@@ -1,4 +1,8 @@
+import 'dart:developer';
+
 import 'package:facility/error_boundary.dart';
+import 'package:facility/hooks/auth_hooks.dart';
+import 'package:facility/screens/homeScreen.dart';
 import 'package:facility/widgets/primary_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -6,7 +10,9 @@ import 'package:otp_text_field/otp_text_field.dart';
 import 'package:otp_text_field/style.dart';
 
 class OtpVerify extends StatefulWidget {
-  const OtpVerify({super.key});
+  const OtpVerify({super.key, required this.phone});
+
+  final String phone;
 
   @override
   State<OtpVerify> createState() => _OtpVerifyState();
@@ -15,6 +21,39 @@ class OtpVerify extends StatefulWidget {
 class _OtpVerifyState extends State<OtpVerify> {
   final OtpFieldController _otpController = OtpFieldController();
   String _currentOtp = '';
+  final AuthHooks _authHooks = AuthHooks();
+
+  Future<void> _handleVerify() async {
+    final messenger = ScaffoldMessenger.of(context);
+    final phone = widget.phone;
+    final otp = _currentOtp.trim();
+
+    if (otp.length < 6) return;
+
+    try {
+      messenger.showSnackBar(const SnackBar(content: Text('Verifying OTP...')));
+      log('🔐 Verifying OTP for phone: $phone, otp: $otp', name: 'OtpVerify');
+
+      final res = await _authHooks.useVerifyOtp(phone: phone, otp: otp);
+
+      log('✅ OTP verification success: ${res['success']}', name: 'OtpVerify');
+      messenger.hideCurrentSnackBar();
+      messenger.showSnackBar(const SnackBar(content: Text('OTP verified!')));
+
+      if (mounted) {
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute<HomeScreen>(
+            builder: (_) => const HomeScreen(),
+          ),
+        );
+      }
+    } catch (e) {
+      log('❌ OTP verification error: $e', name: 'OtpVerify', error: e);
+      messenger.hideCurrentSnackBar();
+      final msg = e.toString().replaceAll('Exception: ', '').split('\n').first;
+      messenger.showSnackBar(SnackBar(content: Text(msg.isEmpty ? 'Verification failed' : msg)));
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -104,10 +143,11 @@ class _OtpVerifyState extends State<OtpVerify> {
                         const SizedBox(height: 16),
                         PrimaryButton(
                           label: 'Verify',
-                          onPressed: _currentOtp.length == 6 ? () {
-                            // Handle OTP verification here
-                            print('OTP entered: $_currentOtp');
-                          } : () {},
+                          onPressed: () {
+                            if (_currentOtp.length == 6) {
+                              _handleVerify();
+                            }
+                          },
                           padding: const EdgeInsets.symmetric(vertical: 14),
                         ),
                       ],

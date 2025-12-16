@@ -63,7 +63,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
       if (mounted) {
         Navigator.of(context).push(
           MaterialPageRoute<OtpVerify>(
-            builder: (_) => const OtpVerify(),
+            builder: (_) => OtpVerify(phone: phone),
           ),
         );
       }
@@ -111,30 +111,16 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
   }
 
   bool _validateLogin() {
+    final cleaned = _loginPhoneController.text.trim().replaceAll(RegExp(r'[\\s\\-\\(\\)+]'), '');
     setState(() {
-      loginPhoneError = _loginPhoneController.text.trim().length != 10;
+      // allow variable length, require at least 10 digits
+      loginPhoneError = cleaned.length < 10;
       loginPassError = _loginPassController.text.trim().isEmpty;
     });
     return !(loginPhoneError || loginPassError);
   }
 
-  bool _validateCreate() {
-    setState(() {
-      firstNameError = _firstNameController.text.trim().isEmpty;
-      lastNameError = _lastNameController.text.trim().isEmpty;
-      emailError = _emailController.text.trim().isEmpty;
-      createPhoneError = _createPhoneController.text.trim().length != 10;
-      newPassError = _newPassController.text.trim().isEmpty;
-      confirmPassError = _confirmPassController.text.trim().isEmpty ||
-          _confirmPassController.text != _newPassController.text;
-    });
-    return !(firstNameError ||
-        lastNameError ||
-        emailError ||
-        createPhoneError ||
-        newPassError ||
-        confirmPassError);
-  }
+  // _validateCreate no longer used; create flow navigates to dedicated screen
 
   void _toggleExpansion() {
     setState(() {
@@ -160,7 +146,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
             messenger.showSnackBar(const SnackBar(content: Text('Success')));
             Navigator.of(context).push(
               MaterialPageRoute<OtpVerify>(
-                builder: (_) => const OtpVerify(),
+                builder: (_) => OtpVerify(phone: _createPhoneController.text.trim()),
               ),
             );
           } else if (state.status == AppAuthStatus.error) {
@@ -188,12 +174,16 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                       // Logo and Heading - outside the white card
                       Column(
                         children: [
-                          Image.asset(
-                            'assets/images/logo.png',
-                            height: 60,
-                            width: 60,
-                            fit: BoxFit.contain,
-                            filterQuality: FilterQuality.high,
+                          SizedBox(
+                            width: 80,
+                            height: 80,
+                            child: Image.asset(
+                              'assets/images/logo.png',
+                              height: 60,
+                              width: 60,
+                              fit: BoxFit.contain,
+                              filterQuality: FilterQuality.high,
+                            ),
                           ),
                           const SizedBox(height: 0),
                           AnimatedSwitcher(

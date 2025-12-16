@@ -2,9 +2,9 @@ import 'dart:developer';
 
 import 'package:facility/error_boundary.dart';
 import 'package:facility/hooks/auth_hooks.dart';
-import 'package:facility/screens/otpVerify.dart';
 import 'package:facility/widgets/phone_input_field.dart';
 import 'package:facility/widgets/primary_button.dart';
+import 'package:facility/screens/otpVerify.dart';
 import 'package:flutter/material.dart';
 // using default TextStyle to avoid web asset loading issues
 
@@ -68,6 +68,7 @@ class _LogintoYourAccountState extends State<LogintoYourAccount> {
       print('[CreateAccount] ✅ OTP sent successfully, showing SnackBar');
       messenger.hideCurrentSnackBar();
 
+      // Show success then navigate to OTP screen
       if (mounted) {
         messenger.showSnackBar(
           SnackBar(
@@ -75,12 +76,12 @@ class _LogintoYourAccountState extends State<LogintoYourAccount> {
             duration: const Duration(seconds: 2),
           ),
         );
-        // Navigate to OTP screen after a brief moment so the user sees the success
+        // Navigate after a brief pause so the SnackBar is visible
         await Future<void>.delayed(const Duration(milliseconds: 600));
         if (mounted) {
           Navigator.of(context).push(
             MaterialPageRoute<OtpVerify>(
-              builder: (_) => const OtpVerify(),
+              builder: (_) => OtpVerify(phone: phone),
             ),
           );
         }
@@ -171,7 +172,8 @@ class _LogintoYourAccountState extends State<LogintoYourAccount> {
                         children: [
                           Image.asset(
                             'assets/images/logo.png',
-                            height: 160,
+                            height: 60,
+                            width: 60,
                             fit: BoxFit.contain,
                             filterQuality: FilterQuality.high,
                           ),

@@ -126,6 +126,10 @@ class AuthHooks {
       log('  Calling: _supabase.auth.signInWithPassword() directly', name: 'AuthHooks');
       
       // Call Supabase signInWithPassword
+      log('  Attempting signInWithPassword with:', name: 'AuthHooks');
+      log('    phone: $formattedPhone', name: 'AuthHooks');
+      log('    password length: ${password.length}', name: 'AuthHooks');
+      
       final response = await _supabase.auth.signInWithPassword(
         phone: formattedPhone,
         password: password,
@@ -162,6 +166,74 @@ class AuthHooks {
       };
     } catch (e) {
       log('❌ useLogin: Error - $e', name: 'AuthHooks', error: e);
+      
+      // Extract better error message from Supabase exceptions
+      String errorMessage = 'Login failed';
+      final errorStr = e.toString();
+      
+      // Check for specific Supabase error types
+      if (e is AuthException) {
+        errorMessage = e.message;
+        log('  AuthException message: $errorMessage', name: 'AuthHooks');
+      } else if (errorStr.contains('Invalid login credentials') || 
+                 errorStr.contains('Invalid credentials')) {
+        // Simple, clear message for invalid phone/password
+        errorMessage = 'Invalid phone number or password.';
+      } else if (errorStr.contains('Email not confirmed')) {
+        errorMessage = 'Please verify your email first';
+      } else if (errorStr.contains('User not found')) {
+        errorMessage = 'No account found with this phone number';
+      } else if (errorStr.contains('Password')) {
+        errorMessage = 'Invalid password. If you registered with OTP, you may need to set a password first.';
+      } else {
+        // Try to extract a cleaner error message
+        errorMessage = errorStr
+            .replaceAll('Exception: ', '')
+            .replaceAll('AuthException: ', '')
+            .replaceAll('GotrueException: ', '')
+            .split('\n')
+            .first
+            .trim();
+        if (errorMessage.isEmpty) {
+          errorMessage = 'Login failed. Please check your credentials and try again.';
+        }
+      }
+      
+      log('  Final error message: $errorMessage', name: 'AuthHooks');
+      throw Exception(errorMessage);
+    }
+  }
+
+  /// Login with OTP hook - sends OTP for login (for users without password)
+  /// This is useful for users who registered with OTP and don't have a password set
+  Future<Map<String, dynamic>> useLoginWithOtp({
+    required String phone,
+  }) async {
+    try {
+      log('📱 useLoginWithOtp: Sending OTP to phone: $phone', name: 'AuthHooks');
+      
+      // Format phone number to E.164 format
+      String formattedPhone;
+      final cleaned = phone.replaceAll(RegExp(r'[\s\-\(\)]'), '');
+      if (!cleaned.startsWith('+')) {
+        formattedPhone = '+92$cleaned';
+      } else {
+        formattedPhone = cleaned;
+      }
+      log('  Formatted phone: $formattedPhone', name: 'AuthHooks');
+      
+      await _supabase.auth.signInWithOtp(
+        phone: formattedPhone,
+        shouldCreateUser: false, // Don't create new user, only login existing
+      );
+      
+      log('✅ useLoginWithOtp: OTP sent successfully', name: 'AuthHooks');
+      return {
+        'success': true,
+        'message': 'OTP sent to your phone',
+      };
+    } catch (e) {
+      log('❌ useLoginWithOtp: Error - $e', name: 'AuthHooks', error: e);
       rethrow;
     }
   }
@@ -267,6 +339,7 @@ class AuthHooks {
   Future<Map<String, dynamic>> useVerifyOtp({
     required String phone,
     required String otp,
+    OtpType? otpType,
   }) async {
     try {
       log('✅ useVerifyOtp: Verifying OTP', name: 'AuthHooks');
@@ -284,11 +357,15 @@ class AuthHooks {
       
       log('🚀 DIRECT SUPABASE CALL - verifyOtp', name: 'AuthHooks');
       log('  Calling: _supabase.auth.verifyOtp() directly', name: 'AuthHooks');
+      log('  OTP Type: ${otpType ?? OtpType.sms}', name: 'AuthHooks');
+      log('  Formatted Phone: $formattedPhone', name: 'AuthHooks');
       
+      // For phone-based OTP verification, always use OtpType.sms
+      // This works for both registration and password recovery flows
       final response = await _supabase.auth.verifyOTP(
         phone: formattedPhone,
         token: otp,
-        type: OtpType.sms,
+        type: OtpType.sms, // Always use SMS for phone-based OTP
       );
       
       if (response.user == null) {
@@ -318,7 +395,33 @@ class AuthHooks {
       };
     } catch (e) {
       log('❌ useVerifyOtp: Error - $e', name: 'AuthHooks', error: e);
-      rethrow;
+      
+      // Extract better error message
+      String errorMessage = 'OTP verification failed';
+      final errorStr = e.toString();
+      
+      if (e is AuthException) {
+        errorMessage = e.message;
+        log('  AuthException message: $errorMessage', name: 'AuthHooks');
+      } else if (errorStr.contains('expired') || errorStr.contains('Expired')) {
+        errorMessage = 'OTP has expired. Please request a new one.';
+      } else if (errorStr.contains('invalid') || errorStr.contains('Invalid')) {
+        errorMessage = 'Invalid OTP code. Please check and try again.';
+      } else {
+        errorMessage = errorStr
+            .replaceAll('Exception: ', '')
+            .replaceAll('AuthException: ', '')
+            .replaceAll('GotrueException: ', '')
+            .split('\n')
+            .first
+            .trim();
+        if (errorMessage.isEmpty) {
+          errorMessage = 'OTP verification failed. Please try again.';
+        }
+      }
+      
+      log('  Final error message: $errorMessage', name: 'AuthHooks');
+      throw Exception(errorMessage);
     }
   }
 

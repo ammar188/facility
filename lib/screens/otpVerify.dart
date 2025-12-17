@@ -3,16 +3,23 @@ import 'dart:developer';
 import 'package:facility/error_boundary.dart';
 import 'package:facility/hooks/auth_hooks.dart';
 import 'package:facility/screens/homeScreen.dart';
+import 'package:facility/screens/newpasswordscreen.dart';
 import 'package:facility/widgets/primary_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:otp_text_field/otp_text_field.dart';
 import 'package:otp_text_field/style.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class OtpVerify extends StatefulWidget {
-  const OtpVerify({super.key, required this.phone});
+  const OtpVerify({
+    super.key,
+    required this.phone,
+    this.isForgotPassword = false,
+  });
 
   final String phone;
+  final bool isForgotPassword;
 
   @override
   State<OtpVerify> createState() => _OtpVerifyState();
@@ -33,19 +40,44 @@ class _OtpVerifyState extends State<OtpVerify> {
     try {
       messenger.showSnackBar(const SnackBar(content: Text('Verifying OTP...')));
       log('🔐 Verifying OTP for phone: $phone, otp: $otp', name: 'OtpVerify');
+      log('  isForgotPassword: ${widget.isForgotPassword}', name: 'OtpVerify');
 
-      final res = await _authHooks.useVerifyOtp(phone: phone, otp: otp);
+      // For phone-based OTP (both registration and forgot password), use OtpType.sms
+      // OtpType.recovery is only for email-based password recovery
+      // When using signInWithOtp with phone, Supabase sends SMS OTP regardless of purpose
+      final otpType = OtpType.sms;
+      log('  Using OTP type: $otpType (phone-based OTP)', name: 'OtpVerify');
+      
+      final res = await _authHooks.useVerifyOtp(
+        phone: phone,
+        otp: otp,
+        otpType: otpType,
+      );
 
       log('✅ OTP verification success: ${res['success']}', name: 'OtpVerify');
+      log('  isForgotPassword flag: ${widget.isForgotPassword}', name: 'OtpVerify');
       messenger.hideCurrentSnackBar();
       messenger.showSnackBar(const SnackBar(content: Text('OTP verified!')));
 
       if (mounted) {
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute<HomeScreen>(
-            builder: (_) => const HomeScreen(),
-          ),
-        );
+        // If this is from forgot password flow, navigate to new password screen
+        // Otherwise, navigate to home screen (registration flow)
+        log('  Navigating based on isForgotPassword: ${widget.isForgotPassword}', name: 'OtpVerify');
+        if (widget.isForgotPassword) {
+          log('  → Navigating to NewPasswordScreen', name: 'OtpVerify');
+          Navigator.of(context).pushReplacement(
+            MaterialPageRoute<NewPasswordScreen>(
+              builder: (_) => const NewPasswordScreen(),
+            ),
+          );
+        } else {
+          log('  → Navigating to HomeScreen', name: 'OtpVerify');
+          Navigator.of(context).pushReplacement(
+            MaterialPageRoute<HomeScreen>(
+              builder: (_) => const HomeScreen(),
+            ),
+          );
+        }
       }
     } catch (e) {
       log('❌ OTP verification error: $e', name: 'OtpVerify', error: e);

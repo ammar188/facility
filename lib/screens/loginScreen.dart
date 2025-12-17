@@ -4,7 +4,9 @@ import 'package:facility/app/auth/auth.dart';
 import 'package:facility/error_boundary.dart';
 import 'package:facility/hooks/auth_hooks.dart';
 import 'package:facility/screens/createAccount.dart';
+import 'package:facility/screens/forgetpassScreen.dart';
 import 'package:facility/screens/otpVerify.dart';
+import 'package:facility/screens/homeScreen.dart';
 import 'package:facility/widgets/phone_input_field.dart';
 import 'package:facility/widgets/primary_button.dart';
 import 'package:flutter/material.dart';
@@ -59,7 +61,78 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
       messenger.hideCurrentSnackBar();
       messenger.showSnackBar(const SnackBar(content: Text('Login successful!')));
       
-      // Navigate to next screen
+      // Navigate to home screen after successful password login
+      if (mounted) {
+        Navigator.of(context).push(
+          MaterialPageRoute<HomeScreen>(
+            builder: (_) => const HomeScreen(),
+          ),
+        );
+      }
+    } catch (e) {
+      log('❌ Login error: $e', name: 'LoginScreen', error: e);
+      messenger.hideCurrentSnackBar();
+
+      // Extract error message (already formatted by auth_hooks)
+      String errorMessage = e.toString()
+          .replaceAll('Exception: ', '')
+          .split('\n')
+          .first
+          .trim();
+
+      if (errorMessage.isEmpty) {
+        errorMessage = 'Login failed. Please check your credentials and try again.';
+      }
+
+      // If it's an invalid phone/password error, automatically fall back to OTP login
+      final errorStr = errorMessage.toLowerCase();
+      if (errorStr.contains('invalid') &&
+          (errorStr.contains('credentials') || errorStr.contains('password'))) {
+        log('ℹ️ Invalid phone/password. Falling back to OTP login for phone: $phone', name: 'LoginScreen');
+        // Try OTP login: will only succeed if phone exists; otherwise shows clear error
+        await _handleLoginWithOtp();
+        return;
+      }
+
+      log('  Showing error to user: $errorMessage', name: 'LoginScreen');
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(errorMessage),
+          duration: const Duration(seconds: 4),
+          backgroundColor: Colors.red.shade700,
+        ),
+      );
+    }
+  }
+
+  Future<void> _handleLoginWithOtp() async {
+    final messenger = ScaffoldMessenger.of(context);
+    final phone = _loginPhoneController.text.trim();
+    
+    if (phone.isEmpty) {
+      messenger.showSnackBar(
+        const SnackBar(content: Text('Please enter your phone number')),
+      );
+      return;
+    }
+    
+    try {
+      messenger.showSnackBar(const SnackBar(content: Text('Sending OTP...')));
+      log('📱 Login with OTP button clicked - Phone: $phone', name: 'LoginScreen');
+      
+      final result = await _authHooks.useLoginWithOtp(phone: phone);
+      
+      log('✅ OTP sent successfully: ${result['success']}', name: 'LoginScreen');
+      messenger.hideCurrentSnackBar();
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text('OTP sent to $phone'),
+          duration: const Duration(seconds: 2),
+        ),
+      );
+      
+      // Navigate to OTP verification screen
+      await Future<void>.delayed(const Duration(milliseconds: 600));
       if (mounted) {
         Navigator.of(context).push(
           MaterialPageRoute<OtpVerify>(
@@ -68,16 +141,16 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
         );
       }
     } catch (e) {
-      log('❌ Login error: $e', name: 'LoginScreen', error: e);
+      log('❌ OTP login error: $e', name: 'LoginScreen', error: e);
       messenger.hideCurrentSnackBar();
-      String errorMessage = 'Login failed';
-      final errorStr = e.toString();
-      if (errorStr.contains('Invalid login credentials')) {
-        errorMessage = 'Invalid phone number or password';
-      } else if (errorStr.contains('Email not confirmed')) {
-        errorMessage = 'Please verify your email first';
-      } else {
-        errorMessage = errorStr.replaceAll('Exception: ', '').split('\n').first;
+      String errorMessage = e.toString()
+          .replaceAll('Exception: ', '')
+          .replaceAll('AuthException: ', '')
+          .split('\n')
+          .first
+          .trim();
+      if (errorMessage.isEmpty) {
+        errorMessage = 'Failed to send OTP. Please try again.';
       }
       messenger.showSnackBar(SnackBar(content: Text(errorMessage)));
     }
@@ -365,7 +438,13 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                                   firstChild: Align(
                                     alignment: Alignment.centerRight,
                                     child: TextButton(
-                                      onPressed: () {},
+                                      onPressed: () {
+                                        Navigator.of(context).push(
+                                          MaterialPageRoute<ForgetPassScreen>(
+                                            builder: (_) => const ForgetPassScreen(),
+                                          ),
+                                        );
+                                      },
                                       style: TextButton.styleFrom(padding: EdgeInsets.zero),
                                       child: const Text('Forget Password', style: TextStyle(fontSize: 11, color: Colors.grey, decoration: TextDecoration.underline)),
                                     ),

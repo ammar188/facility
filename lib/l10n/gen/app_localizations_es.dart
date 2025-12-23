@@ -13,4 +13,19 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get counterAppBarTitle => 'Contador';
+
+  @override
+  String get chatCenter => 'Chat Center';
+
+  @override
+  String get noMessages => 'No messages yet';
+
+  @override
+  String get somethingWentWrong => 'Something went wrong';
+
+  @override
+  String get messageHint => 'Type a message...';
+
+  @override
+  String get warning => 'Warning';
 }

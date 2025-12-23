@@ -102,6 +102,36 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Counter'**
   String get counterAppBarTitle;
+
+  /// Title for the chat center screen
+  ///
+  /// In en, this message translates to:
+  /// **'Chat Center'**
+  String get chatCenter;
+
+  /// Text shown when there are no messages
+  ///
+  /// In en, this message translates to:
+  /// **'No messages yet'**
+  String get noMessages;
+
+  /// Error message text
+  ///
+  /// In en, this message translates to:
+  /// **'Something went wrong'**
+  String get somethingWentWrong;
+
+  /// Hint text for message input field
+  ///
+  /// In en, this message translates to:
+  /// **'Type a message...'**
+  String get messageHint;
+
+  /// Warning text label
+  ///
+  /// In en, this message translates to:
+  /// **'Warning'**
+  String get warning;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

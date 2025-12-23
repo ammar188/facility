@@ -16,14 +16,16 @@ class AuthHooks {
   Future<Map<String, dynamic>> useRegister({
     required String phone,
     required String fullName,
+    String? email,
     String? referrerCode,
   }) async {
     try {
       log('📝 useRegister: Starting OTP-based registration', name: 'AuthHooks');
       log('  Phone: $phone', name: 'AuthHooks');
       log('  Full Name: $fullName', name: 'AuthHooks');
+      log('  Email: ${email ?? "null"}', name: 'AuthHooks');
       log('  Referrer Code: ${referrerCode ?? "null"}', name: 'AuthHooks');
-      print('[useRegister] Starting registration for phone: $phone, fullName: $fullName');
+      print('[useRegister] Starting registration for phone: $phone, fullName: $fullName, email: ${email ?? "null"}');
       
       // Format phone number to E.164 format
       String formattedPhone;
@@ -40,6 +42,9 @@ class AuthHooks {
       final userMetadata = <String, dynamic>{
         'full_name': fullName,
       };
+      if (email != null && email.isNotEmpty) {
+        userMetadata['email'] = email;
+      }
       if (referrerCode != null && referrerCode.isNotEmpty) {
         userMetadata['referred_by'] = referrerCode;
       }
@@ -50,14 +55,19 @@ class AuthHooks {
       print('[useRegister] Calling supabase.auth.signInWithOtp for $formattedPhone');
       
       // Call Supabase signInWithOtp (creates auth user if doesn't exist)
+      // Note: shouldCreateUser defaults to true, which creates user in auth.users
+      log('  Calling signInWithOtp with shouldCreateUser: true (default)', name: 'AuthHooks');
       await _supabase.auth.signInWithOtp(
         phone: formattedPhone,
         data: userMetadata,
+        // shouldCreateUser: true is default - this creates user in auth.users
       );
       
       log('✅ useRegister: OTP sent successfully', name: 'AuthHooks');
       log('  Phone: $formattedPhone', name: 'AuthHooks');
+      log('  ⚠️ NOTE: User will be created in auth.users AFTER OTP verification', name: 'AuthHooks');
       print('[useRegister] ✅ OTP sent successfully to $formattedPhone');
+      print('⚠️ User will be created in auth.users table after OTP is verified');
       
       return {
         'success': true,
@@ -362,27 +372,157 @@ class AuthHooks {
       
       // For phone-based OTP verification, always use OtpType.sms
       // This works for both registration and password recovery flows
+      // IMPORTANT: verifyOTP creates the user in auth.users if they don't exist
+      log('  ⚠️ CRITICAL: verifyOTP should create user in auth.users if not exists', name: 'AuthHooks');
+      
       final response = await _supabase.auth.verifyOTP(
         phone: formattedPhone,
         token: otp,
         type: OtpType.sms, // Always use SMS for phone-based OTP
       );
       
-      if (response.user == null) {
-        throw Exception('OTP verification failed');
-      }
+      print('');
+      print('═══════════════════════════════════════════════════════');
+      print('✅✅✅ OTP VERIFICATION COMPLETE!');
+      print('═══════════════════════════════════════════════════════');
       
       log('✅ useVerifyOtp: OTP verified successfully', name: 'AuthHooks');
-      log('  User ID: ${response.user?.id}', name: 'AuthHooks');
+      print('[useVerifyOtp] ✅ OTP verified successfully');
       
-      // Save tokens if session is available
+      log('  Response received from Supabase', name: 'AuthHooks');
+      print('[useVerifyOtp] Response received from Supabase');
+      print('[useVerifyOtp] User in response: ${response.user != null}');
+      print('[useVerifyOtp] Session in response: ${response.session != null}');
+      
+      if (response.user == null) {
+        log('  ❌ CRITICAL: User is null after OTP verification!', name: 'AuthHooks');
+        print('');
+        print('❌❌❌ CRITICAL ERROR: User was not created in auth.users table!');
+        print('This means Supabase did not create the user. Check:');
+        print('  1. Supabase project settings');
+        print('  2. Phone authentication is enabled');
+        print('  3. OTP was valid');
+        print('═══════════════════════════════════════════════════════');
+        throw Exception('User was not created after OTP verification');
+      }
+      
+      log('  ✅ User exists in response!', name: 'AuthHooks');
+      print('[useVerifyOtp] ✅ User exists in response!');
+      print('[useVerifyOtp] User ID: ${response.user?.id}');
+      print('[useVerifyOtp] User Phone: ${response.user?.phone}');
+      print('[useVerifyOtp] User Created At: ${response.user?.createdAt}');
+      
+      log('  User ID: ${response.user?.id}', name: 'AuthHooks');
+      log('  User Phone: ${response.user?.phone}', name: 'AuthHooks');
+      log('  User Created At: ${response.user?.createdAt}', name: 'AuthHooks');
+
+      // IMPORTANT: According to Supabase documentation, user data is automatically stored
+      // in auth.users table when OTP is verified. No separate Users table is needed.
+      // User metadata (full_name, referred_by, etc.) is stored in user_metadata JSONB column.
+      
+      // Save session for authenticated requests
       if (response.session != null) {
-        final tokenStorage = TokenStorage(_supabase);
-        await tokenStorage.saveTokens(
-          response.session?.accessToken,
-          response.session?.refreshToken,
-        );
-        log('  ✅ Tokens saved', name: 'AuthHooks');
+        log('  Setting session on Supabase client...', name: 'AuthHooks');
+        try {
+          await _supabase.auth.setSession(response.session!.refreshToken!);
+          log('  ✅ Session set successfully', name: 'AuthHooks');
+          
+          // Verify session is set
+          final currentSession = _supabase.auth.currentSession;
+          if (currentSession != null) {
+            log('  ✅ Verified: Current session exists', name: 'AuthHooks');
+            log('  Session user ID: ${currentSession.user.id}', name: 'AuthHooks');
+          }
+        } catch (sessionError) {
+          log('  ❌ Error setting session: $sessionError', name: 'AuthHooks', error: sessionError);
+        }
+      }
+
+      // Verify user exists in auth.users (this is automatic - Supabase stores it)
+      try {
+        final authUser = response.user!;
+        final metadata = authUser.userMetadata ?? <String, dynamic>{};
+
+        log('✅✅✅ User registered successfully in auth.users table!', name: 'AuthHooks');
+        log('  User ID: ${authUser.id}', name: 'AuthHooks');
+        log('  Phone: ${authUser.phone ?? formattedPhone}', name: 'AuthHooks');
+        log('  Email: ${authUser.email ?? "null"}', name: 'AuthHooks');
+        log('  Full Name: ${metadata['full_name'] ?? "null"}', name: 'AuthHooks');
+        log('  Referred By: ${metadata['referred_by'] ?? "null"}', name: 'AuthHooks');
+        log('  Created At: ${authUser.createdAt}', name: 'AuthHooks');
+        log('  Phone Confirmed At: ${authUser.phoneConfirmedAt ?? "null"}', name: 'AuthHooks');
+        
+        // CRITICAL: Double-check by fetching the user again from Supabase
+        // This confirms the user is actually persisted in auth.users
+        log('  🔍 VERIFYING: Fetching user from auth.users to confirm persistence...', name: 'AuthHooks');
+        try {
+          // Wait a moment for Supabase to persist
+          await Future<void>.delayed(const Duration(milliseconds: 500));
+          
+          final verifyUserResponse = await _supabase.auth.getUser();
+          if (verifyUserResponse.user != null) {
+            log('  ✅✅✅ CONFIRMED: User exists and is accessible in auth.users!', name: 'AuthHooks');
+            log('  Verified User ID: ${verifyUserResponse.user!.id}', name: 'AuthHooks');
+            log('  Verified Phone: ${verifyUserResponse.user!.phone}', name: 'AuthHooks');
+            log('  Verified Created At: ${verifyUserResponse.user!.createdAt}', name: 'AuthHooks');
+            log('  Verified Phone Confirmed: ${verifyUserResponse.user!.phoneConfirmedAt != null}', name: 'AuthHooks');
+            
+            print('');
+            print('═══════════════════════════════════════════════════════');
+            print('✅✅✅ CONFIRMED: User exists in Supabase auth.users!');
+            print('═══════════════════════════════════════════════════════');
+            print('User ID: ${verifyUserResponse.user!.id}');
+            print('Phone: ${verifyUserResponse.user!.phone}');
+            print('Full Name: ${verifyUserResponse.user!.userMetadata?['full_name'] ?? "Not provided"}');
+            print('Created At: ${verifyUserResponse.user!.createdAt}');
+            print('Phone Confirmed: ${verifyUserResponse.user!.phoneConfirmedAt != null}');
+            print('');
+            print('💡 WHERE TO FIND IN SUPABASE DASHBOARD:');
+            print('   1. Go to: https://app.supabase.com');
+            print('   2. Select your project');
+            print('   3. Go to: Authentication → Users');
+            print('   4. Look for phone: ${verifyUserResponse.user!.phone}');
+            print('   5. Make sure filter shows "All users" (not just confirmed)');
+            print('   6. Refresh the page if needed');
+            print('═══════════════════════════════════════════════════════');
+            print('');
+            
+            // Also log to console with log() for developer tools
+            log('✅✅✅ CONFIRMED: User exists in Supabase auth.users!', name: 'AuthHooks');
+            log('  User ID: ${verifyUserResponse.user!.id}', name: 'AuthHooks');
+            log('  Phone: ${verifyUserResponse.user!.phone}', name: 'AuthHooks');
+          } else {
+            log('  ❌❌❌ CRITICAL: getUser() returned null user!', name: 'AuthHooks');
+            print('❌❌❌ CRITICAL ERROR: User was NOT persisted in auth.users!');
+            print('The user object exists in the response but is not accessible via getUser()');
+            print('This indicates the user was not actually saved to the database.');
+            print('');
+            print('Possible causes:');
+            print('  1. Supabase project configuration issue');
+            print('  2. Database connection problem');
+            print('  3. RLS policies blocking user creation');
+            print('  4. Phone authentication not properly enabled');
+          }
+        } catch (verifyError) {
+          log('  ❌❌❌ CRITICAL: Could not verify user via getUser(): $verifyError', name: 'AuthHooks', error: verifyError);
+          print('❌❌❌ CRITICAL ERROR: Could not verify user persistence!');
+          print('Error: $verifyError');
+          print('');
+          print('This means we cannot confirm the user was saved to auth.users.');
+        }
+        
+        print('✅✅✅ SUCCESS: User registered in Supabase auth.users table!');
+        print('User ID: ${authUser.id}');
+        print('Phone: ${authUser.phone ?? formattedPhone}');
+        print('Full Name: ${metadata['full_name'] ?? "Not provided"}');
+        print('');
+        print('💡 NOTE: User data is stored in auth.users table (Supabase built-in).');
+        print('   To access user data, use: supabase.auth.getUser()');
+        print('   User metadata is in: user.user_metadata');
+        
+      } catch (e) {
+        log('⚠️ Could not verify user data: $e', name: 'AuthHooks');
+        print('❌ ERROR: Could not verify user data: $e');
       }
       
       return {

@@ -3,5 +3,25 @@
     "counterAppBarTitle": "Counter",
     "@counterAppBarTitle": {
         "description": "Text shown in the AppBar of the Counter Page"
+    },
+    "chatCenter": "Chat Center",
+    "@chatCenter": {
+        "description": "Title for the chat center screen"
+    },
+    "noMessages": "No messages yet",
+    "@noMessages": {
+        "description": "Text shown when there are no messages"
+    },
+    "somethingWentWrong": "Something went wrong",
+    "@somethingWentWrong": {
+        "description": "Error message text"
+    },
+    "messageHint": "Type a message...",
+    "@messageHint": {
+        "description": "Hint text for message input field"
+    },
+    "warning": "Warning",
+    "@warning": {
+        "description": "Warning text label"
     }
 }

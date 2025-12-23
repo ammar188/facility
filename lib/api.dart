@@ -5,9 +5,9 @@
 class ApiConfig {
   ApiConfig._();
 
-  static const String supabaseUrl = 'https://fdwwznmkotguczxahodq.supabase.co';
+  static const String supabaseUrl = 'https://buvxunjakqrunlneauwk.supabase.co';
 
   static const String supabaseAnonKey =
-      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZkd3d6bm1rb3RndWN6eGFob2RxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MDQ0Mzg0NzIsImV4cCI6MjAyMDAxNDQ3Mn0.BU0F5D6XN3v2wCl5HY95pYAvMFASQFKH39uHXs9PjhY';
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ1dnh1bmpha3FydW5sbmVhdXdrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk3NDk4ODEsImV4cCI6MjA3NTMyNTg4MX0.fWrm84_wyFtVxq4sXlr5ZYwErAX4hakNkle5wneg2aE';
 }
 

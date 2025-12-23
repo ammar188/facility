@@ -53,10 +53,14 @@ class _LogintoYourAccountState extends State<LogintoYourAccount> {
       log('  Full Name: "$fullName"', name: 'CreateAccount');
       print('[CreateAccount] Calling useRegister hook...');
       
-      // Call useRegister with phone and fullName (OTP-based registration)
+      // Get email if provided
+      final email = _emailController.text.trim();
+      
+      // Call useRegister with phone, fullName, and email (OTP-based registration)
       final result = await _authHooks.useRegister(
         phone: phone,
         fullName: fullName,
+        email: email.isNotEmpty ? email : null,
       );
       
       log('📥 useRegister result received:', name: 'CreateAccount');

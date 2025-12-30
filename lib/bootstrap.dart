@@ -2,7 +2,9 @@ import 'dart:async';
 import 'dart:developer';
 
 import 'package:bloc/bloc.dart';
+import 'package:facility/api.dart';
 import 'package:flutter/widgets.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class AppBlocObserver extends BlocObserver {
   const AppBlocObserver();
@@ -27,7 +29,28 @@ Future<void> bootstrap(FutureOr<Widget> Function() builder) async {
 
   Bloc.observer = const AppBlocObserver();
 
-  // Add cross-flavor configuration here
+  // Initialize Supabase with session persistence
+  try {
+    await Supabase.initialize(
+      url: ApiConfig.supabaseUrl,
+      anonKey: ApiConfig.supabaseAnonKey,
+      authOptions: const FlutterAuthClientOptions(
+        authFlowType: AuthFlowType.pkce,
+        autoRefreshToken: true,
+      ),
+    );
+    log('Supabase initialized successfully', name: 'Bootstrap');
+    
+    // Log current session status
+    final session = Supabase.instance.client.auth.currentSession;
+    if (session != null) {
+      log('✅ Session restored on bootstrap - User ID: ${session.user.id}', name: 'Bootstrap');
+    } else {
+      log('ℹ️ No session found on bootstrap', name: 'Bootstrap');
+    }
+  } catch (e) {
+    log('Failed to initialize Supabase: $e', name: 'Bootstrap');
+  }
 
   runApp(await builder());
 }

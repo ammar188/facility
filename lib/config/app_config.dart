@@ -2,8 +2,8 @@ class AppConfig {
   // Backend URL - Update this to match your backend
   // For local development (same machine): 'http://localhost:3000'
   // For local network: 'http://192.168.18.110:3000'
-  For production: 'https://adryd-backend.onrender.com'
-  // static const String backendUrl = 'http://localhost:3000';
+  // For production: 'https://adryd-backend.onrender.com'
+  static const String backendUrl = 'http://localhost:3000';
   
   // API Endpoints - Update these if your backend uses different paths
   // Common variations:

@@ -109,7 +109,7 @@ class _LoginScreenState extends State<LoginScreen> {
       );
       
       // Navigate to OTP verification screen
-      await Future<void>.delayed(const Duration(milliseconds: 600));
+      await Future.delayed(const Duration(milliseconds: 600));
       if (mounted) {
         Navigator.of(context).push(
           MaterialPageRoute<OtpVerifyScreen>(
@@ -352,3 +352,4 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 }
+

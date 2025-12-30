@@ -9,6 +9,7 @@ environment:
 
 dependencies:
   bloc: ^9.0.1
+  dio: ^5.9.0
   flutter:
     sdk: flutter
   flutter_bloc: ^9.1.1
@@ -18,6 +19,9 @@ dependencies:
   http: ^1.1.0
   supabase_flutter: ^2.0.0
   shared_preferences: ^2.2.2
+  otp_text_field: ^1.1.3
+  font_awesome_flutter: ^10.7.0
+  supabase: ^2.10.0
 
 dev_dependencies:
   bloc_test: ^10.0.0
@@ -25,7 +29,22 @@ dev_dependencies:
     sdk: flutter
   mocktail: ^1.0.4
   very_good_analysis: ^10.0.0
+  flutter_launcher_icons: ^0.13.1
 
 flutter:
   generate: true
   uses-material-design: true
+  assets:
+    - assets/images/
+
+flutter_icons:
+  android: true
+  ios: true
+  web:
+    generate: true
+    image_path: assets/images/logo.png
+    background_color: "#ffffff"
+    theme_color: "#ffffff"
+  image_path: assets/images/logo.png
+  adaptive_icon_background: "#ffffff"
+  adaptive_icon_foreground: assets/images/logo.png

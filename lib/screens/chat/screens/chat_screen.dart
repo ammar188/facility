@@ -118,7 +118,11 @@ class _ChatScreenState extends State<ChatScreen> {
                   emptyWidget: Center(
                     child: Text(
                       context.l10n.noMessages,
-                      style: const TextStyle(color: Colors.grey),
+                      style: TextStyle(
+                        color: Theme.of(context).brightness == Brightness.dark 
+                            ? Colors.grey[400] 
+                            : Colors.grey,
+                      ),
                     ),
                   ),
                   loadingWidget: const Center(child: CircularProgressIndicator()),
@@ -195,7 +199,11 @@ class _ChatScreenState extends State<ChatScreen> {
                           width: 42,
                           height: 42,
                           child: Material(
-                            color: _hasText ? AppColors.primary : Colors.grey[300],
+                            color: _hasText 
+                                ? Theme.of(context).colorScheme.primary 
+                                : (Theme.of(context).brightness == Brightness.dark 
+                                    ? Colors.grey[700] 
+                                    : Colors.grey[300]),
                             borderRadius: BorderRadius.circular(8),
                             child: InkWell(
                               onTap: _hasText
@@ -211,7 +219,11 @@ class _ChatScreenState extends State<ChatScreen> {
                                 alignment: Alignment.center,
                                 child: Icon(
                                   Icons.send_rounded,
-                                  color: _hasText ? Colors.white : Colors.grey[600],
+                                  color: _hasText 
+                                      ? Colors.white 
+                                      : (Theme.of(context).brightness == Brightness.dark 
+                                          ? Colors.grey[400] 
+                                          : Colors.grey[600]),
                                   size: 18,
                                 ),
                               ),
@@ -241,16 +253,18 @@ class _ChatScreenState extends State<ChatScreen> {
             appBar: AppBar(
               automaticallyImplyLeading: !kIsWeb,
               centerTitle: false,
-              backgroundColor: Colors.white,
+              backgroundColor: Theme.of(context).scaffoldBackgroundColor,
               elevation: 0,
               title: Text(selectedChat?.otherUserName ?? ''),
               bottom: PreferredSize(
                 preferredSize: const Size.fromHeight(1),
-                child: Container(
-                  height: 1,
-                  width: MediaQuery.of(context).size.width,
-                  color: AppColors.primarySoft,
-                ),
+                  child: Container(
+                    height: 1,
+                    width: MediaQuery.of(context).size.width,
+                    color: Theme.of(context).brightness == Brightness.dark 
+                        ? Colors.grey[800] 
+                        : AppColors.primarySoft,
+                  ),
               ),
             ),
             body: body,
@@ -268,13 +282,17 @@ class _ChatScreenState extends State<ChatScreen> {
         margin: const EdgeInsets.symmetric(vertical: 10),
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         decoration: BoxDecoration(
-          color: Colors.grey.withOpacity(0.15),
+          color: Theme.of(context).brightness == Brightness.dark 
+              ? Colors.grey.withOpacity(0.3) 
+              : Colors.grey.withOpacity(0.15),
           borderRadius: BorderRadius.circular(12),
         ),
         child: Text(
           _formatDate(dateTime),
           style: TextStyle(
-            color: Colors.grey[600],
+            color: Theme.of(context).brightness == Brightness.dark 
+                ? Colors.grey[400] 
+                : Colors.grey[600],
             fontSize: 12,
             letterSpacing: 1.1,
           ),

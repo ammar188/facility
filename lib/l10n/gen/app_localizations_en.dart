@@ -28,4 +28,19 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get warning => 'Warning';
+
+  @override
+  String get featured => 'Featured';
+
+  @override
+  String get pinned => 'Pinned';
+
+  @override
+  String get popular => 'Popular';
+
+  @override
+  String get recent => 'Recent';
+
+  @override
+  String get latest => 'Latest';
 }

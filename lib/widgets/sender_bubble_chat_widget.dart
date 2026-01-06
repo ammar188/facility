@@ -18,7 +18,9 @@ class SenderBubbleChatWidget extends StatelessWidget {
         margin: const EdgeInsets.only(bottom: 8, right: 50),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
         decoration: BoxDecoration(
-          color: Colors.grey[300],
+          color: Theme.of(context).brightness == Brightness.dark 
+              ? Colors.grey[700] 
+              : Colors.grey[300],
           borderRadius: const BorderRadius.only(
             topLeft: Radius.circular(18),
             topRight: Radius.circular(18),
@@ -30,13 +32,20 @@ class SenderBubbleChatWidget extends StatelessWidget {
           children: [
             Text(
               chat,
-              style: const TextStyle(color: Colors.black87, fontSize: 16),
+              style: TextStyle(
+                color: Theme.of(context).brightness == Brightness.dark 
+                    ? Colors.white 
+                    : Colors.black87, 
+                fontSize: 16,
+              ),
             ),
             const SizedBox(height: 4),
             Text(
               time,
               style: TextStyle(
-                color: Colors.grey[600],
+                color: Theme.of(context).brightness == Brightness.dark 
+                    ? Colors.grey[400] 
+                    : Colors.grey[600],
                 fontSize: 10,
               ),
             ),

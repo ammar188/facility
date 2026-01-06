@@ -97,14 +97,21 @@ class ChatsListView extends StatelessWidget {
                         _formatDate(chat.lastMessageCreatedAt!),
                         style: TextStyle(
                           fontSize: 12,
-                          color: chat.seen ? Colors.grey : Colors.blue,
+                          color: chat.seen 
+                              ? (Theme.of(context).brightness == Brightness.dark 
+                                  ? Colors.grey[400] 
+                                  : Colors.grey) 
+                              : Theme.of(context).colorScheme.primary,
                           fontWeight:
                               chat.seen ? FontWeight.normal : FontWeight.bold,
                         ),
                       ),
                     if (!chat.seen)
-                      const Icon(Icons.mark_chat_unread,
-                          color: Colors.blue, size: 18),
+                      Icon(
+                        Icons.mark_chat_unread,
+                        color: Theme.of(context).colorScheme.primary, 
+                        size: 18,
+                      ),
                   ],
                 ),
                 onTap: () {
@@ -143,16 +150,22 @@ class _DefaultLoadingItem extends StatelessWidget {
   Widget build(BuildContext context) {
     return ListTile(
       leading: CircleAvatar(
-        backgroundColor: Colors.grey.shade300,
+        backgroundColor: Theme.of(context).brightness == Brightness.dark 
+            ? Colors.grey[700] 
+            : Colors.grey.shade300,
       ),
       title: Container(
         height: 14,
-        color: Colors.grey.shade300,
+        color: Theme.of(context).brightness == Brightness.dark 
+            ? Colors.grey[700] 
+            : Colors.grey.shade300,
         margin: const EdgeInsets.symmetric(vertical: 4),
       ),
       subtitle: Container(
         height: 12,
-        color: Colors.grey.shade300,
+        color: Theme.of(context).brightness == Brightness.dark 
+            ? Colors.grey[700] 
+            : Colors.grey.shade300,
         margin: const EdgeInsets.symmetric(vertical: 2),
       ),
     );

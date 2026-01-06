@@ -23,5 +23,25 @@
     "warning": "Warning",
     "@warning": {
         "description": "Warning text label"
+    },
+    "featured": "Featured",
+    "@featured": {
+        "description": "Featured products tab"
+    },
+    "pinned": "Pinned",
+    "@pinned": {
+        "description": "Pinned products tab"
+    },
+    "popular": "Popular",
+    "@popular": {
+        "description": "Popular products tab"
+    },
+    "recent": "Recent",
+    "@recent": {
+        "description": "Recent products tab"
+    },
+    "latest": "Latest",
+    "@latest": {
+        "description": "Latest products tab"
     }
 }

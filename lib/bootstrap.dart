@@ -3,8 +3,12 @@ import 'dart:developer';
 
 import 'package:bloc/bloc.dart';
 import 'package:facility/api.dart';
+import 'package:facility/app/auth/auth.dart';
+import 'package:facility/app/cubit/app_cubit.dart';
+import 'package:facility/app/profile/profile.dart';
 import 'package:flutter/widgets.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:supabase_flutter/supabase_flutter.dart' hide AuthState;
 
 class AppBlocObserver extends BlocObserver {
   const AppBlocObserver();
@@ -40,5 +44,31 @@ Future<void> bootstrap(FutureOr<Widget> Function() builder) async {
     log('Failed to initialize Supabase: $e', name: 'Bootstrap');
   }
 
-  runApp(await builder());
+  // Wrap the app with BlocProviders
+  final appWidget = await builder();
+  runApp(
+    MultiBlocProvider(
+      providers: [
+        BlocProvider<AppCubit>(
+          create: (_) => AppCubit(),
+        ),
+        BlocProvider<AuthCubit>(
+          create: (_) {
+            try {
+              final supabaseClient = Supabase.instance.client;
+              log('Bootstrap: Creating AuthCubit with Supabase client', name: 'Bootstrap');
+              return AuthCubit(supabaseClient: supabaseClient);
+            } catch (e) {
+              log('Bootstrap: Failed to get Supabase client, using noop storage: $e', name: 'Bootstrap');
+              return AuthCubit();
+            }
+          },
+        ),
+        BlocProvider<ProfileCubit>(
+          create: (_) => ProfileCubit(),
+        ),
+      ],
+      child: appWidget,
+    ),
+  );
 }
